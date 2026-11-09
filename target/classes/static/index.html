@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UCO · Panel Académico</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%238b5cf6'/%3E%3Ctext x='32' y='40' font-family='Arial' font-size='19' font-weight='bold' fill='white' text-anchor='middle'%3EUCO%3C/text%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --fondo: #080d20;
+      --fondo-2: #111a3a;
+      --tarjeta: rgba(255, 255, 255, 0.055);
+      --tarjeta-fuerte: rgba(255, 255, 255, 0.09);
+      --borde: rgba(255, 255, 255, 0.11);
+      --texto: #eef2ff;
+      --suave: #a3aed6;
+      --verde: #22c55e;
+      --verde-suave: rgba(34, 197, 94, 0.14);
+      --amarillo: #f59e0b;
+      --amarillo-suave: rgba(245, 158, 11, 0.14);
+      --rojo: #ef4444;
+      --rojo-suave: rgba(239, 68, 68, 0.14);
+      --acento: #8b5cf6;
+      --azul: #3b82f6;
+      --radio: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--texto);
+      background:
+        radial-gradient(circle at 12% 6%, rgba(139, 92, 246, 0.24), transparent 42%),
+        radial-gradient(circle at 88% 2%, rgba(34, 197, 94, 0.16), transparent 38%),
+        radial-gradient(circle at 50% 110%, rgba(59, 130, 246, 0.16), transparent 50%),
+        linear-gradient(160deg, var(--fondo), var(--fondo-2));
+      background-attachment: fixed;
+    }
+
+    .layout { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+
+    /* ----------------------------- Sidebar ----------------------------- */
+    .sidebar {
+      position: sticky; top: 0; height: 100vh;
+      display: flex; flex-direction: column; gap: 26px;
+      padding: 28px 18px;
+      border-right: 1px solid var(--borde);
+      background: rgba(8, 13, 32, 0.6);
+      backdrop-filter: blur(16px);
+      z-index: 20;
+    }
+
+    .marca { display: flex; align-items: center; gap: 13px; padding: 0 6px; }
+    .logo-uco {
+      width: 52px; height: 52px; flex-shrink: 0;
+      border-radius: 16px; display: grid; place-items: center;
+      font-weight: 800; font-size: 17px; letter-spacing: .5px;
+      background: linear-gradient(135deg, var(--acento), var(--azul));
+      box-shadow: 0 12px 26px rgba(139, 92, 246, .45);
+    }
+    .marca h1 { font-size: 17px; font-weight: 800; }
+    .marca p { color: var(--suave); font-size: 11.5px; margin-top: 2px; }
+
+    .nav { display: flex; flex-direction: column; gap: 7px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 15px; border-radius: 13px;
+      border: 1px solid transparent; background: transparent;
+      color: var(--suave); font-size: 14px; font-weight: 600;
+      cursor: pointer; text-align: left; font-family: inherit;
+      transition: all .2s ease;
+    }
+    .nav-item svg { width: 19px; height: 19px; flex-shrink: 0; }
+    .nav-item:hover { color: var(--texto); background: rgba(255,255,255,.05); }
+    .nav-item.activo {
+      color: #fff;
+      background: linear-gradient(135deg, rgba(139,92,246,.85), rgba(59,130,246,.85));
+      box-shadow: 0 10px 22px rgba(139,92,246,.32);
+    }
+    .nav-item .nav-badge {
+      margin-left: auto; font-size: 10px; background: var(--rojo);
+      color: #fff; border-radius: 999px; padding: 2px 7px; font-weight: 700;
+    }
+
+    .sidebar-pie { margin-top: auto; display: flex; flex-direction: column; gap: 12px; }
+    .swagger-link {
+      display: flex; align-items: center; justify-content: center; gap: 9px;
+      padding: 11px; border-radius: 12px; text-decoration: none;
+      color: var(--texto); font-size: 13px; font-weight: 600;
+      border: 1px solid var(--borde); background: var(--tarjeta);
+      transition: border-color .2s ease, transform .2s ease;
+    }
+    .swagger-link:hover { border-color: var(--acento); transform: translateY(-2px); }
+    .swagger-link .punto { width: 8px; height: 8px; border-radius: 50%; background: var(--verde); box-shadow: 0 0 10px var(--verde); }
+    .sidebar-pie small { color: var(--suave); font-size: 10.5px; text-align: center; }
+
+    /* ----------------------------- Contenido ----------------------------- */
+    .contenido { padding: 34px 34px 70px; max-width: 1280px; width: 100%; }
+
+    .vista { display: none; }
+    .vista.activa { display: block; animation: aparecer .45s ease both; }
+    @keyframes aparecer { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    .vista-cabecera { margin-bottom: 26px; }
+    .vista-cabecera h2 { font-size: 27px; font-weight: 800; letter-spacing: -.5px; }
+    .vista-cabecera p { color: var(--suave); font-size: 14px; margin-top: 6px; }
+    .vista-cabecera .fecha { color: var(--acento); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 8px; }
+
+    /* ----------------------------- Tarjetas stat ----------------------------- */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      padding: 20px; border-radius: var(--radio);
+      background: var(--tarjeta); border: 1px solid var(--borde);
+      backdrop-filter: blur(12px); position: relative; overflow: hidden;
+      transition: transform .25s ease, border-color .25s ease;
+    }
+    .stat-card::after {
+      content: ""; position: absolute; right: -30px; top: -30px;
+      width: 100px; height: 100px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(139,92,246,.28), transparent 70%);
+    }
+    .stat-card:hover { transform: translateY(-4px); border-color: rgba(139,92,246,.5); }
+    .stat-icon {
+      width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center;
+      background: rgba(139,92,246,.16); color: #c4b5fd; margin-bottom: 14px;
+    }
+    .stat-icon svg { width: 21px; height: 21px; }
+    .stat-valor { font-size: 31px; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+    .stat-etiqueta { color: var(--suave); font-size: 12px; text-transform: uppercase; letter-spacing: 1.1px; margin-top: 8px; }
+    .stat-card.verde .stat-valor { color: var(--verde); }
+    .stat-card.amarillo .stat-valor { color: var(--amarillo); }
+    .stat-card.rojo .stat-valor { color: var(--rojo); }
+    .stat-card.acento .stat-valor { color: #a78bfa; }
+
+    /* ----------------------------- Paneles ----------------------------- */
+    .panel {
+      background: var(--tarjeta); border: 1px solid var(--borde);
+      border-radius: var(--radio); padding: 20px; backdrop-filter: blur(12px);
+    }
+    .panel-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .panel-cabecera h3 { font-size: 16px; font-weight: 700; }
+    .panel-cabecera span { color: var(--suave); font-size: 12px; }
+    .dos-columnas { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; margin-bottom: 24px; }
+    .dos-columnas-iguales { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 24px; }
+
+    .mini-lista { display: flex; flex-direction: column; gap: 4px; }
+    .mini-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 10px; border-radius: 12px; transition: background .2s ease;
+    }
+    .mini-item:hover { background: rgba(255,255,255,.05); }
+    .mini-item .pos { width: 24px; text-align: center; font-weight: 800; color: var(--suave); font-size: 13px; }
+    .mini-item .mini-nombre { font-size: 13.5px; font-weight: 600; }
+    .mini-item .mini-sub { color: var(--suave); font-size: 11.5px; margin-top: 2px; }
+    .mini-item .mini-valor { margin-left: auto; font-weight: 800; font-size: 13.5px; padding: 5px 10px; border-radius: 9px; }
+    .mini-item .mini-valor.verde { color: var(--verde); background: var(--verde-suave); }
+    .mini-item .mini-valor.amarillo { color: var(--amarillo); background: var(--amarillo-suave); }
+    .mini-item .mini-valor.rojo { color: var(--rojo); background: var(--rojo-suave); }
+
+    .chart-caja { position: relative; height: 260px; width: 100%; }
+    .chart-caja.alto { height: 300px; }
+
+    /* ----------------------------- Avatar ----------------------------- */
+    .avatar, .avatar-lg {
+      border-radius: 14px; display: grid; place-items: center;
+      font-weight: 800; flex-shrink: 0;
+      background: linear-gradient(135deg, rgba(139,92,246,.95), rgba(59,130,246,.95));
+    }
+    .avatar { width: 46px; height: 46px; font-size: 15px; }
+    .avatar-lg { width: 56px; height: 56px; font-size: 18px; }
+
+    .promedio-badge {
+      padding: 8px 13px; border-radius: 13px; font-weight: 800; font-size: 16px;
+      min-width: 66px; text-align: center; line-height: 1.1;
+    }
+    .promedio-badge small { display: block; font-size: 8.5px; letter-spacing: 1px; opacity: .85; margin-bottom: 2px; }
+    .promedio-badge.verde { color: #86efac; background: var(--verde-suave); border: 1px solid rgba(34,197,94,.45); }
+    .promedio-badge.amarillo { color: #fcd34d; background: var(--amarillo-suave); border: 1px solid rgba(245,158,11,.45); }
+    .promedio-badge.rojo { color: #fca5a5; background: var(--rojo-suave); border: 1px solid rgba(239,68,68,.45); }
+
+    .punto-semaforo { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .punto-semaforo.verde { background: var(--verde); box-shadow: 0 0 9px var(--verde); }
+    .punto-semaforo.amarillo { background: var(--amarillo); box-shadow: 0 0 9px var(--amarillo); }
+    .punto-semaforo.rojo { background: var(--rojo); box-shadow: 0 0 9px var(--rojo); }
+
+    /* ----------------------------- Insignias ----------------------------- */
+    .insignias { display: flex; flex-wrap: wrap; gap: 6px; }
+    .insignia {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 10.5px; font-weight: 700; padding: 4px 9px; border-radius: 999px;
+      background: rgba(139,92,246,.16); color: #c4b5fd; border: 1px solid rgba(139,92,246,.3);
+    }
+    .insignia svg { width: 12px; height: 12px; }
+    .insignia-star { background: rgba(245,158,11,.16); color: #fcd34d; border-color: rgba(245,158,11,.35); }
+    .insignia-trend, .insignia-up { background: rgba(34,197,94,.14); color: #86efac; border-color: rgba(34,197,94,.3); }
+    .insignia-check { background: rgba(59,130,246,.16); color: #93c5fd; border-color: rgba(59,130,246,.32); }
+    .insignia-alert { background: rgba(239,68,68,.14); color: #fca5a5; border-color: rgba(239,68,68,.32); }
+
+    /* ----------------------------- Controles ----------------------------- */
+    .controles {
+      display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+      margin-bottom: 22px; padding: 14px; border-radius: 16px;
+      background: var(--tarjeta); border: 1px solid var(--borde);
+    }
+    .controles .crece { flex: 1 1 220px; }
+    input[type="search"], input[type="number"], select {
+      width: 100%; padding: 11px 15px; border-radius: 11px;
+      border: 1px solid var(--borde); background: rgba(8,13,32,.65);
+      color: var(--texto); font-size: 13.5px; outline: none; font-family: inherit;
+      transition: border-color .2s ease;
+    }
+    input[type="search"]:focus, input[type="number"]:focus, select:focus { border-color: var(--acento); }
+    input::placeholder { color: var(--suave); }
+    select option { background: #111a3a; color: var(--texto); }
+    .etiqueta-campo { display: block; color: var(--suave); font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 11px 20px; border-radius: 11px; border: 1px solid var(--borde);
+      background: var(--tarjeta-fuerte); color: var(--texto);
+      font-size: 13.5px; font-weight: 700; cursor: pointer; font-family: inherit;
+      transition: all .2s ease;
+    }
+    .btn:hover { border-color: var(--acento); transform: translateY(-1px); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .btn-primario { background: linear-gradient(135deg, var(--acento), var(--azul)); border-color: transparent; }
+    .btn-primario:hover { box-shadow: 0 10px 24px rgba(139,92,246,.4); }
+
+    /* ----------------------------- Estudiantes ----------------------------- */
+    .estudiante-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+    .estudiante-card {
+      background: var(--tarjeta); border: 1px solid var(--borde); border-radius: var(--radio);
+      padding: 18px; cursor: pointer; transition: transform .22s ease, border-color .22s ease;
+      animation: aparecer .4s ease both;
+    }
+    .estudiante-card:hover { transform: translateY(-4px); border-color: rgba(139,92,246,.55); }
+    .estudiante-cab { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .estudiante-cab .info { min-width: 0; flex: 1; }
+    .estudiante-cab h3 { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .estudiante-cab p { color: var(--suave); font-size: 11.5px; margin-top: 2px; }
+    .estudiante-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+    .estudiante-meta .semestre { font-size: 11px; color: var(--suave); background: rgba(255,255,255,.06); padding: 5px 10px; border-radius: 999px; }
+    .estudiante-meta .materias { font-size: 11px; color: var(--suave); }
+
+    .paginacion { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 22px; }
+    .paginacion span { color: var(--suave); font-size: 13px; }
+
+    .vacio { text-align: center; color: var(--suave); padding: 50px 20px; font-size: 14px; }
+
+    /* ----------------------------- Ranking ----------------------------- */
+    .podio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 22px; align-items: end; }
+    .podio-card {
+      background: var(--tarjeta); border: 1px solid var(--borde); border-radius: var(--radio);
+      padding: 22px 18px; text-align: center; position: relative; overflow: hidden;
+      animation: aparecer .5s ease both;
+    }
+    .podio-card::before {
+      content: ""; position: absolute; inset: 0 0 auto 0; height: 4px;
+      background: linear-gradient(90deg, var(--acento), var(--azul));
+    }
+    .podio-card.p1 { transform: translateY(-10px); border-color: rgba(245,158,11,.55); }
+    .podio-card.p1::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .podio-card.p2::before { background: linear-gradient(90deg, #cbd5e1, #94a3b8); }
+    .podio-card.p3::before { background: linear-gradient(90deg, #b45309, #d97706); }
+    .podio-pos {
+      width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+      font-weight: 800; font-size: 15px; margin: 0 auto 12px;
+      background: rgba(139,92,246,.16); color: #c4b5fd;
+    }
+    .podio-card.p1 .podio-pos { background: rgba(245,158,11,.18); color: #fcd34d; }
+    .podio-card.p2 .podio-pos { background: rgba(148,163,184,.2); color: #e2e8f0; }
+    .podio-card.p3 .podio-pos { background: rgba(217,119,6,.2); color: #fdba74; }
+    .podio-card .avatar-lg { margin: 0 auto 10px; }
+    .podio-card h3 { font-size: 14.5px; font-weight: 700; }
+    .podio-card p { color: var(--suave); font-size: 11.5px; margin-top: 3px; }
+    .podio-card .promedio-badge { display: inline-block; margin-top: 12px; }
+    .podio-card .insignias { justify-content: center; margin-top: 10px; }
+
+    .lista-ranking { display: flex; flex-direction: column; gap: 4px; }
+    .fila-ranking {
+      display: flex; align-items: center; gap: 14px; padding: 13px 14px;
+      border-radius: 13px; transition: background .2s ease;
+    }
+    .fila-ranking:hover { background: rgba(255,255,255,.05); }
+    .fila-ranking .pos { width: 26px; text-align: center; font-weight: 800; color: var(--suave); font-size: 14px; }
+    .fila-ranking .quien { flex: 1; min-width: 0; }
+    .fila-ranking .quien h4 { font-size: 14px; font-weight: 700; }
+    .fila-ranking .quien p { color: var(--suave); font-size: 11.5px; margin-top: 2px; }
+    .fila-ranking .insignias { display: none; }
+    @media (min-width: 720px) { .fila-ranking .insignias { display: flex; } }
+
+    /* ----------------------------- Riesgo ----------------------------- */
+    .riesgo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+    .riesgo-card {
+      background: linear-gradient(160deg, rgba(239,68,68,.12), var(--tarjeta));
+      border: 1px solid rgba(239,68,68,.3); border-radius: var(--radio);
+      padding: 18px; animation: aparecer .45s ease both;
+    }
+    .riesgo-card .cab { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .riesgo-card h3 { font-size: 15px; font-weight: 700; }
+    .riesgo-card p { color: var(--suave); font-size: 11.5px; margin-top: 2px; }
+    .riesgo-card .materias-riesgo { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .chip-rojo { font-size: 10.5px; font-weight: 700; padding: 4px 9px; border-radius: 999px; background: var(--rojo-suave); color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
+
+    /* ----------------------------- Profesores ----------------------------- */
+    .profesor-selector { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 22px; }
+    .profesor-selector .campo { flex: 1 1 280px; }
+    .materia-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; margin-bottom: 22px; }
+    .materia-card {
+      background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 16px;
+      padding: 16px; cursor: pointer; transition: all .2s ease;
+    }
+    .materia-card:hover { transform: translateY(-3px); border-color: rgba(139,92,246,.5); }
+    .materia-card.activa { border-color: var(--acento); background: rgba(139,92,246,.12); }
+    .materia-card h4 { font-size: 14px; font-weight: 700; }
+    .materia-card .codigo { color: var(--acento); font-size: 10.5px; font-weight: 700; letter-spacing: .6px; margin-top: 3px; }
+    .materia-card .datos { display: flex; gap: 14px; margin-top: 12px; font-size: 11.5px; color: var(--suave); }
+    .materia-card .datos b { color: var(--texto); display: block; font-size: 15px; }
+
+    /* ----------------------------- Tablas ----------------------------- */
+    .tabla-envoltura { overflow-x: auto; }
+    table.tabla { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.tabla th {
+      text-align: left; color: var(--suave); font-size: 10.5px; text-transform: uppercase;
+      letter-spacing: 1px; padding: 9px 12px; border-bottom: 1px solid var(--borde);
+      white-space: nowrap;
+    }
+    table.tabla td { padding: 11px 12px; border-bottom: 1px solid rgba(255,255,255,.05); }
+    table.tabla tr:last-child td { border-bottom: none; }
+    table.tabla tbody tr { transition: background .15s ease; }
+    table.tabla tbody tr:hover { background: rgba(255,255,255,.04); }
+    table.tabla .materia-nombre { font-weight: 600; }
+    table.tabla .materia-nombre small { display: block; color: var(--suave); font-weight: 400; font-size: 10.5px; margin-top: 2px; }
+    .nota-pill { display: inline-block; min-width: 54px; text-align: center; font-weight: 800; font-size: 12.5px; padding: 5px 10px; border-radius: 9px; }
+    .nota-pill.verde { color: var(--verde); background: var(--verde-suave); }
+    .nota-pill.amarillo { color: var(--amarillo); background: var(--amarillo-suave); }
+    .nota-pill.rojo { color: var(--rojo); background: var(--rojo-suave); }
+
+    .con-punto { display: flex; align-items: center; gap: 9px; }
+
+    /* ----------------------------- Modal / Carnet ----------------------------- */
+    .overlay {
+      position: fixed; inset: 0; z-index: 100;
+      display: none; align-items: flex-start; justify-content: center;
+      padding: 26px 18px; overflow-y: auto;
+      background: rgba(4, 7, 18, 0.78); backdrop-filter: blur(7px);
+    }
+    .overlay.visible { display: flex; animation: aparecer .25s ease both; }
+    .modal {
+      width: 100%; max-width: 980px; position: relative;
+      border-radius: 24px; border: 1px solid var(--borde);
+      background: linear-gradient(170deg, #121a3c, #0b1229);
+      padding: 26px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.55);
+    }
+    .modal-cerrar {
+      position: absolute; top: 16px; right: 16px;
+      width: 38px; height: 38px; border-radius: 11px;
+      border: 1px solid var(--borde); background: var(--tarjeta);
+      color: var(--texto); cursor: pointer; display: grid; place-items: center;
+      transition: all .2s ease; z-index: 2;
+    }
+    .modal-cerrar:hover { border-color: var(--rojo); color: var(--rojo); }
+    .modal-cerrar svg { width: 18px; height: 18px; }
+
+    .modal-grid { display: grid; grid-template-columns: 300px 1fr; gap: 24px; }
+
+    .carnet {
+      border-radius: 20px; overflow: hidden; position: relative;
+      background: linear-gradient(155deg, #6d28d9 0%, #4338ca 45%, #1d4ed8 100%);
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 20px 45px rgba(79, 70, 229, .35);
+      padding: 18px;
+    }
+    .carnet::after {
+      content: ""; position: absolute; right: -50px; bottom: -60px;
+      width: 190px; height: 190px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,.18), transparent 70%);
+    }
+    .carnet-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; position: relative; z-index: 1; }
+    .carnet-top .mini-logo { font-size: 15px; font-weight: 800; letter-spacing: 1px; }
+    .carnet-top span { font-size: 9.5px; text-transform: uppercase; letter-spacing: 1.4px; opacity: .85; }
+    .carnet-cuerpo { display: flex; gap: 14px; align-items: center; position: relative; z-index: 1; }
+    .carnet-foto { width: 86px; height: 100px; border-radius: 14px; overflow: hidden; flex-shrink: 0; background: rgba(255,255,255,.16); }
+    .carnet-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .carnet-iniciales {
+      width: 100%; height: 100%; display: grid; place-items: center;
+      font-size: 26px; font-weight: 800; background: rgba(255,255,255,.18);
+    }
+    .carnet-iniciales.oculta { display: none; }
+    .carnet-foto img.oculta { display: none; }
+    .carnet-datos h3 { font-size: 16.5px; font-weight: 800; line-height: 1.15; }
+    .carnet-datos .codigo { font-size: 11px; letter-spacing: 1.3px; opacity: .9; margin: 5px 0 8px; font-weight: 700; }
+    .carnet-datos p { font-size: 11.5px; opacity: .92; margin-top: 2px; }
+    .carnet-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 15px; position: relative; z-index: 1; }
+    .carnet-badges .insignia { background: rgba(255,255,255,.18); color: #fff; border-color: rgba(255,255,255,.3); }
+    .carnet-promedio {
+      margin-top: 16px; display: flex; align-items: center; justify-content: space-between;
+      background: rgba(0,0,0,.22); border-radius: 12px; padding: 11px 14px; position: relative; z-index: 1;
+    }
+    .carnet-promedio small { font-size: 9px; letter-spacing: 1.3px; opacity: .85; }
+    .carnet-promedio strong { font-size: 22px; }
+    .carnet-promedio.verde strong { color: #86efac; }
+    .carnet-promedio.amarillo strong { color: #fcd34d; }
+    .carnet-promedio.rojo strong { color: #fca5a5; }
+
+    .boletin-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .boletin-cab h4 { font-size: 16px; font-weight: 700; }
+    .leyenda-semaforo { display: flex; gap: 14px; flex-wrap: wrap; font-size: 10.5px; color: var(--suave); }
+    .leyenda-semaforo b { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+    .modal-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
+    .modal-charts .panel { padding: 16px; }
+    .modal-charts h5 { font-size: 12px; color: var(--suave); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .modal-acciones { display: flex; justify-content: flex-end; margin-top: 18px; }
+
+    /* ----------------------------- Simulador ----------------------------- */
+    .simulador-grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; }
+    .simulador-panel { padding: 22px; }
+    .simulador-campo { margin-bottom: 16px; }
+    .slider-caja { margin: 22px 0 10px; }
+    .slider-caja .slider-cab { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .slider-caja .slider-cab span { color: var(--suave); font-size: 12px; font-weight: 600; }
+    .slider-caja .slider-cab strong { font-size: 26px; font-weight: 800; color: #a78bfa; }
+    input[type="range"] { width: 100%; accent-color: var(--acento); height: 6px; cursor: pointer; }
+    .sim-datos { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+    .sim-dato { display: flex; align-items: center; justify-content: space-between; font-size: 13px; padding: 10px 13px; border-radius: 11px; background: rgba(255,255,255,.05); }
+    .sim-dato span { color: var(--suave); }
+    .sim-dato strong { font-size: 15px; }
+    .sim-resultado {
+      margin-top: 18px; padding: 18px; border-radius: 15px; text-align: center;
+      border: 1px solid var(--borde); background: rgba(255,255,255,.045);
+    }
+    .sim-resultado .grande { font-size: 40px; font-weight: 800; line-height: 1; }
+    .sim-resultado .grande.verde { color: var(--verde); }
+    .sim-resultado .grande.amarillo { color: var(--amarillo); }
+    .sim-resultado .grande.rojo { color: var(--rojo); }
+    .sim-resultado .detalle { color: var(--suave); font-size: 12px; margin-top: 7px; }
+    .sim-mensaje { margin-top: 14px; font-size: 12.5px; color: var(--suave); line-height: 1.5; }
+
+    @media (max-width: 1080px) {
+      .dos-columnas, .dos-columnas-iguales { grid-template-columns: 1fr; }
+      .modal-grid { grid-template-columns: 1fr; }
+      .modal-charts { grid-template-columns: 1fr; }
+      .simulador-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; flex-direction: column; gap: 16px; padding: 18px 16px; border-right: none; border-bottom: 1px solid var(--borde); }
+      .marca { justify-content: flex-start; }
+      .nav { flex-direction: row; overflow-x: auto; padding-bottom: 4px; gap: 6px; }
+      .nav-item { flex-shrink: 0; padding: 9px 13px; font-size: 12.5px; }
+      .nav-item .nav-badge { display: none; }
+      .sidebar-pie { display: none; }
+      .contenido { padding: 24px 16px 60px; }
+      .vista-cabecera h2 { font-size: 22px; }
+      .podio { grid-template-columns: 1fr; }
+      .podio-card.p1 { transform: none; }
+      .modal { padding: 18px; }
+      .carnet { max-width: 340px; }
+    }
+
+    @media (max-width: 520px) {
+      .estudiante-grid { grid-template-columns: 1fr; }
+      .riesgo-grid { grid-template-columns: 1fr; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .stat-valor { font-size: 26px; }
+      .controles { padding: 12px; }
+      .modal { padding: 16px; border-radius: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="marca">
+        <div class="logo-uco">UCO</div>
+        <div>
+          <h1>Panel Académico</h1>
+          <p>Universidad · Gestión de notas</p>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item activo" data-vista="inicio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+          Inicio
+        </button>
+        <button class="nav-item" data-vista="estudiantes">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          Estudiantes
+        </button>
+        <button class="nav-item" data-vista="ranking">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 01-10 0z"/><path d="M17 6h3v2a3 3 0 01-3 3"/><path d="M7 6H4v2a3 3 0 003 3"/></svg>
+          Ranking
+        </button>
+        <button class="nav-item" data-vista="riesgo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+          En riesgo
+          <span class="nav-badge" id="badge-riesgo">0</span>
+        </button>
+        <button class="nav-item" data-vista="profesores">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M7 9.5V15c0 1.7 2.2 3 5 3s5-1.3 5-3V9.5"/></svg>
+          Profesores
+        </button>
+        <button class="nav-item" data-vista="simulador">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16"/><path d="M7 19V9"/><path d="M12 19V5"/><path d="M17 19v-7"/></svg>
+          Simulador
+        </button>
+      </nav>
+
+      <div class="sidebar-pie">
+        <a class="swagger-link" href="/docs" target="_blank" rel="noopener">
+          <span class="punto"></span> Documentación Swagger
+        </a>
+        <small>API UCO v2.0 · Datos académicos</small>
+      </div>
+    </aside>
+
+    <main class="contenido">
+      <!-- ----------------------------- INICIO ----------------------------- -->
+      <section class="vista activa" id="vista-inicio">
+        <div class="vista-cabecera">
+          <div class="fecha">Panel de control</div>
+          <h2>Bienvenido al Panel Académico UCO</h2>
+          <p>Resumen en tiempo real de estudiantes, docentes, materias y rendimiento académico.</p>
+        </div>
+
+        <div class="stat-grid" id="stat-grid">
+          <div class="stat-card acento">
+            <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+            <div class="stat-valor" id="stat-estudiantes">0</div>
+            <div class="stat-etiqueta">Estudiantes</div>
+          </div>
+          <div class="stat-card acento">
+            <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M7 9.5V15c0 1.7 2.2 3 5 3s5-1.3 5-3V9.5"/></svg></div>
+            <div class="stat-valor" id="stat-profesores">0</div>
+            <div class="stat-etiqueta">Profesores</div>
+          </div>
+          <div class="stat-card acento">
+            <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>
+            <div class="stat-valor" id="stat-materias">0</div>
+            <div class="stat-etiqueta">Materias</div>
+          </div>
+          <div class="stat-card" id="stat-promedio-card">
+            <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 7-8"/><path d="M14 7h6v6"/></svg></div>
+            <div class="stat-valor" id="stat-promedio">0.00</div>
+            <div class="stat-etiqueta">Promedio general</div>
+          </div>
+        </div>
+
+        <div class="dos-columnas">
+          <div class="panel">
+            <div class="panel-cabecera">
+              <h3>Aprobados vs reprobados</h3>
+              <span>Por notas registradas</span>
+            </div>
+            <div class="chart-caja"><canvas id="chart-dona"></canvas></div>
+          </div>
+          <div class="panel">
+            <div class="panel-cabecera">
+              <h3>Promedio por materia</h3>
+              <span>Semáforo académico</span>
+            </div>
+            <div class="chart-caja"><canvas id="chart-materias"></canvas></div>
+          </div>
+        </div>
+
+        <div class="dos-columnas">
+          <div class="panel">
+            <div class="panel-cabecera">
+              <h3>Top estudiantes</h3>
+              <span>Mejores promedios</span>
+            </div>
+            <div class="mini-lista" id="inicio-ranking"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-cabecera">
+              <h3>En riesgo</h3>
+              <span>Promedio menor a 3.0</span>
+            </div>
+            <div class="mini-lista" id="inicio-riesgo"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------- ESTUDIANTES ----------------------------- -->
+      <section class="vista" id="vista-estudiantes">
+        <div class="vista-cabecera">
+          <div class="fecha">Comunidad UCO</div>
+          <h2>Estudiantes</h2>
+          <p>Busca en vivo y filtra por semestre o profesor. Haz clic en un estudiante para ver su carnet y boletín.</p>
+        </div>
+
+        <div class="controles">
+          <div class="crece">
+            <label class="etiqueta-campo" for="buscar-estudiante">Buscar</label>
+            <input type="search" id="buscar-estudiante" placeholder="Nombre, apellido, programa o correo..." />
+          </div>
+          <div style="flex: 0 1 160px;">
+            <label class="etiqueta-campo" for="filtro-semestre">Semestre</label>
+            <select id="filtro-semestre">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div style="flex: 0 1 240px;">
+            <label class="etiqueta-campo" for="filtro-profesor">Profesor</label>
+            <select id="filtro-profesor">
+              <option value="">Todos</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="estudiante-grid" id="lista-estudiantes"></div>
+        <div class="paginacion" id="paginacion-estudiantes"></div>
+      </section>
+
+      <!-- ----------------------------- RANKING ----------------------------- -->
+      <section class="vista" id="vista-ranking">
+        <div class="vista-cabecera">
+          <div class="fecha">Mérito académico</div>
+          <h2>Ranking de estudiantes</h2>
+          <p>Los 10 mejores promedios generales de la UCO con sus insignias automáticas.</p>
+        </div>
+        <div class="podio" id="podio"></div>
+        <div class="panel">
+          <div class="panel-cabecera">
+            <h3>Top 10</h3>
+            <span>Promedio general</span>
+          </div>
+          <div class="lista-ranking" id="lista-ranking"></div>
+        </div>
+      </section>
+
+      <!-- ----------------------------- RIESGO ----------------------------- -->
+      <section class="vista" id="vista-riesgo">
+        <div class="vista-cabecera">
+          <div class="fecha">Alerta académica</div>
+          <h2>Estudiantes en riesgo</h2>
+          <p>Promedio general por debajo de 3.0. Requieren acompañamiento y plan de recuperación.</p>
+        </div>
+        <div class="riesgo-grid" id="lista-riesgo"></div>
+      </section>
+
+      <!-- ----------------------------- PROFESORES ----------------------------- -->
+      <section class="vista" id="vista-profesores">
+        <div class="vista-cabecera">
+          <div class="fecha">Cuerpo docente</div>
+          <h2>Vista del profesor</h2>
+          <p>Selecciona un docente para ver su carga académica, materias, estudiantes y distribución de notas.</p>
+        </div>
+
+        <div class="profesor-selector">
+          <div class="campo">
+            <label class="etiqueta-campo" for="select-profesor-vista">Profesor</label>
+            <select id="select-profesor-vista"></select>
+          </div>
+        </div>
+
+        <div class="stat-grid" id="profesor-stats"></div>
+        <div class="materia-grid" id="profesor-materias"></div>
+
+        <div class="dos-columnas">
+          <div class="panel">
+            <div class="panel-cabecera">
+              <h3 id="materia-titulo">Distribución de notas</h3>
+              <span id="materia-codigo"></span>
+            </div>
+            <div class="chart-caja"><canvas id="chart-histograma"></canvas></div>
+          </div>
+          <div class="panel">
+            <div class="panel-cabecera">
+              <h3>Resumen de la materia</h3>
+              <span id="materia-aprobacion"></span>
+            </div>
+            <div class="mini-lista" id="materia-resumen"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-cabecera">
+            <h3>Estudiantes de la materia</h3>
+            <span id="materia-total"></span>
+          </div>
+          <div class="tabla-envoltura">
+            <table class="tabla">
+              <thead>
+                <tr><th>Estudiante</th><th>Semestre</th><th>Corte 1</th><th>Corte 2</th><th>Corte 3</th><th>Promedio</th></tr>
+              </thead>
+              <tbody id="materia-estudiantes"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------- SIMULADOR ----------------------------- -->
+      <section class="vista" id="vista-simulador">
+        <div class="vista-cabecera">
+          <div class="fecha">Herramienta académica</div>
+          <h2>Simulador de notas</h2>
+          <p>Mueve el slider y descubre cuánto necesitas en el último corte para alcanzar tu meta.</p>
+        </div>
+
+        <div class="simulador-grid">
+          <div class="panel simulador-panel">
+            <div class="simulador-campo">
+              <label class="etiqueta-campo" for="sim-estudiante">Estudiante</label>
+              <select id="sim-estudiante"></select>
+            </div>
+            <div class="simulador-campo">
+              <label class="etiqueta-campo" for="sim-materia">Materia</label>
+              <select id="sim-materia"></select>
+            </div>
+            <div class="simulador-campo">
+              <label class="etiqueta-campo" for="sim-meta">Meta de promedio</label>
+              <input type="number" id="sim-meta" min="0" max="5" step="0.1" value="3.0" />
+            </div>
+
+            <div class="slider-caja">
+              <div class="slider-cab">
+                <span>Nota del último corte (simulada)</span>
+                <strong id="sim-corte3-valor">0.0</strong>
+              </div>
+              <input type="range" id="sim-slider" min="0" max="5" step="0.1" value="0" />
+            </div>
+
+            <div class="sim-resultado">
+              <small style="color: var(--suave); font-size: 10.5px; letter-spacing: 1.3px; text-transform: uppercase;">Promedio simulado</small>
+              <div class="grande" id="sim-promedio">0.00</div>
+              <div class="detalle" id="sim-estado">—</div>
+            </div>
+
+            <div class="sim-datos">
+              <div class="sim-dato"><span>Corte 1</span><strong id="sim-c1">—</strong></div>
+              <div class="sim-dato"><span>Corte 2</span><strong id="sim-c2">—</strong></div>
+              <div class="sim-dato"><span>Nota necesaria para la meta</span><strong id="sim-necesaria">—</strong></div>
+              <div class="sim-dato"><span>Promedio máximo posible</span><strong id="sim-maximo">—</strong></div>
+            </div>
+            <p class="sim-mensaje" id="sim-mensaje"></p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-cabecera">
+              <h3>Comparación de cortes</h3>
+              <span id="sim-materia-nombre">—</span>
+            </div>
+            <div class="chart-caja alto"><canvas id="chart-simulador"></canvas></div>
+            <div class="mini-lista" id="sim-requisitos" style="margin-top: 16px;"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal carnet + boletín -->
+  <div class="overlay" id="overlay-estudiante" aria-hidden="true">
+    <div class="modal">
+      <button class="modal-cerrar" id="modal-cerrar" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+      </button>
+      <div id="modal-contenido"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    const API = "/api";
+    const charts = {};
+    const COLORES = { verde: "#22c55e", amarillo: "#f59e0b", rojo: "#ef4444" };
+
+    const estado = {
+      estudiantes: { page: 1, perPage: 6, total: 0, pages: 0, semestre: "", buscar: "", profesorId: "" },
+      profesores: [],
+      profesorActual: null,
+      materiaActual: null,
+      detalleModal: null,
+      simulador: { datos: null },
+    };
+
+    if (window.Chart) {
+      Chart.defaults.color = "#a3aed6";
+      Chart.defaults.borderColor = "rgba(255,255,255,0.08)";
+      Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      Chart.defaults.font.size = 11;
+    }
+
+    const $ = (sel, ctx) => (ctx || document).querySelector(sel);
+    const $$ = (sel, ctx) => Array.from((ctx || document).querySelectorAll(sel));
+
+    async function api(ruta) {
+      const respuesta = await fetch(API + ruta);
+      if (!respuesta.ok) {
+        let mensaje = "Error al consultar la API";
+        try {
+          const datos = await respuesta.json();
+          if (datos.detail) mensaje = datos.detail;
+        } catch (e) { /* sin cuerpo */ }
+        throw new Error(mensaje);
+      }
+      return respuesta.json();
+    }
+
+    const fmt = (n, d = 2) => (n === null || n === undefined || isNaN(n) ? "—" : Number(n).toFixed(d));
+    const semaforo = (v) => (v < 3 ? "rojo" : v < 3.5 ? "amarillo" : "verde");
+    const iniciales = (nombre) =>
+      String(nombre || "").split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase();
+    const promedioDe = (lista) => (lista.length ? lista.reduce((a, b) => a + b, 0) / lista.length : 0);
+    const redondear = (n) => Math.round(n * 100) / 100;
+
+    const ICONOS = {
+      star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.7 5.5 6 .9-4.3 4.2 1 6-5.4-2.8L6.6 19.6l1-6L3.3 9.4l6-.9z"/></svg>',
+      trend: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 7-8"/><path d="M14 7h6v6"/></svg>',
+      up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>',
+      check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>',
+      alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>',
+    };
+
+    function insigniasHTML(lista) {
+      return (lista || [])
+        .map(
+          (i) =>
+            '<span class="insignia insignia-' + i.icono + '" title="' + i.descripcion + '">' +
+            (ICONOS[i.icono] || ICONOS.check) + "<span>" + i.nombre + "</span></span>"
+        )
+        .join("");
+    }
+
+    function crearChart(id, config) {
+      const canvas = document.getElementById(id);
+      if (!canvas || !window.Chart) return;
+      if (charts[id]) charts[id].destroy();
+      charts[id] = new Chart(canvas.getContext("2d"), config);
+    }
+
+    function animarNumero(elemento, objetivo, decimales, sufijo) {
+      if (!elemento) return;
+      const inicio = 0;
+      const duracion = 900;
+      const t0 = performance.now();
+      function paso(t) {
+        const p = Math.min((t - t0) / duracion, 1);
+        const valor = inicio + (objetivo - inicio) * (1 - Math.pow(1 - p, 3));
+        elemento.textContent = valor.toFixed(decimales || 0) + (sufijo || "");
+        if (p < 1) requestAnimationFrame(paso);
+      }
+      requestAnimationFrame(paso);
+    }
+
+    function mostrarVista(vista) {
+      $$(".vista").forEach((v) => v.classList.toggle("activa", v.id === "vista-" + vista));
+      $$(".nav-item").forEach((b) => b.classList.toggle("activo", b.dataset.vista === vista));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      const cargadores = {
+        inicio: cargarInicio,
+        estudiantes: cargarEstudiantes,
+        ranking: cargarRanking,
+        riesgo: cargarRiesgo,
+        profesores: cargarVistaProfesores,
+        simulador: cargarVistaSimulador,
+      };
+      if (cargadores[vista]) cargadores[vista]();
+    }
+
+    /* ----------------------------- INICIO ----------------------------- */
+    async function cargarInicio() {
+      try {
+        const [stats, ranking, riesgo, promedios] = await Promise.all([
+          api("/estadisticas"),
+          api("/ranking"),
+          api("/estudiantes/en-riesgo"),
+          api("/promedios"),
+        ]);
+
+        document.getElementById("stat-promedio-card").className = "stat-card " + semaforo(stats.promedio_general);
+        animarNumero($("#stat-estudiantes"), stats.total_estudiantes, 0);
+        animarNumero($("#stat-profesores"), stats.total_profesores, 0);
+        animarNumero($("#stat-materias"), stats.total_materias, 0);
+        animarNumero($("#stat-promedio"), stats.promedio_general, 2);
+
+        const badge = $("#badge-riesgo");
+        if (badge) { badge.textContent = riesgo.length; badge.style.display = riesgo.length ? "inline-block" : "none"; }
+
+        $("#inicio-ranking").innerHTML = ranking.slice(0, 5).map((r, i) =>
+          '<div class="mini-item">' +
+            '<div class="pos">' + (i + 1) + "</div>" +
+            '<div class="avatar" style="width:34px;height:34px;font-size:12px;border-radius:10px;">' + iniciales(r.estudiante) + "</div>" +
+            '<div><div class="mini-nombre">' + r.estudiante + '</div><div class="mini-sub">' + r.programa + "</div></div>" +
+            '<div class="mini-valor ' + r.semaforo + '">' + fmt(r.promedio) + "</div>" +
+          "</div>"
+        ).join("") || '<div class="vacio">Sin datos</div>';
+
+        $("#inicio-riesgo").innerHTML = riesgo.slice(0, 4).map((r) =>
+          '<div class="mini-item">' +
+            '<span class="punto-semaforo rojo"></span>' +
+            '<div><div class="mini-nombre">' + r.estudiante + '</div><div class="mini-sub">' + r.programa + "</div></div>" +
+            '<div class="mini-valor rojo">' + fmt(r.promedio) + "</div>" +
+          "</div>"
+        ).join("") || '<div class="vacio">Sin estudiantes en riesgo</div>';
+
+        crearChart("chart-dona", {
+          type: "doughnut",
+          data: {
+            labels: ["Aprobados", "Reprobados"],
+            datasets: [{
+              data: [stats.aprobados, stats.reprobados],
+              backgroundColor: [COLORES.verde, COLORES.rojo],
+              borderColor: "rgba(8,13,32,0.9)",
+              borderWidth: 3,
+              hoverOffset: 8,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: "66%",
+            plugins: { legend: { position: "bottom", labels: { padding: 16, boxWidth: 12, usePointStyle: true } } },
+          },
+        });
+
+        const porMateria = {};
+        promedios.forEach((p) => {
+          if (!porMateria[p.materia]) porMateria[p.materia] = [];
+          porMateria[p.materia].push(p.promedio);
+        });
+        const nombresMateria = Object.keys(porMateria);
+        const valoresMateria = nombresMateria.map((m) => redondear(promedioDe(porMateria[m])));
+
+        crearChart("chart-materias", {
+          type: "bar",
+          data: {
+            labels: nombresMateria,
+            datasets: [{
+              label: "Promedio",
+              data: valoresMateria,
+              backgroundColor: valoresMateria.map((v) => COLORES[semaforo(v)]),
+              borderRadius: 8,
+              maxBarThickness: 46,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { min: 0, max: 5, ticks: { stepSize: 1 }, grid: { color: "rgba(255,255,255,0.06)" } },
+              x: { grid: { display: false }, ticks: { maxRotation: 40, minRotation: 0 } },
+            },
+          },
+        });
+      } catch (error) {
+        $("#inicio-ranking").innerHTML = '<div class="vacio">' + error.message + "</div>";
+      }
+    }
+
+    /* ----------------------------- ESTUDIANTES ----------------------------- */
+    async function cargarProfesoresFiltro() {
+      if (estado.profesores.length) return;
+      try {
+        estado.profesores = await api("/profesores");
+        const select = $("#filtro-profesor");
+        select.innerHTML = '<option value="">Todos</option>' + estado.profesores
+          .map((p) => '<option value="' + p.id + '">' + p.nombre + " " + p.apellido + "</option>")
+          .join("");
+      } catch (error) { /* silencioso */ }
+    }
+
+    function llenarSemestres() {
+      const select = $("#filtro-semestre");
+      if (select.options.length > 1) return;
+      for (let i = 1; i <= 10; i++) {
+        const opcion = document.createElement("option");
+        opcion.value = String(i);
+        opcion.textContent = "Semestre " + i;
+        select.appendChild(opcion);
+      }
+    }
+
+    async function cargarEstudiantes() {
+      await cargarProfesoresFiltro();
+      llenarSemestres();
+      const f = estado.estudiantes;
+      const params = new URLSearchParams();
+      if (f.semestre) params.set("semestre", f.semestre);
+      if (f.buscar) params.set("buscar", f.buscar);
+      if (f.profesorId) params.set("profesor_id", f.profesorId);
+      params.set("page", String(f.page));
+      params.set("per_page", String(f.perPage));
+
+      try {
+        const data = await api("/estudiantes?" + params.toString());
+        f.total = data.total;
+        f.pages = data.pages;
+        f.items = data.items;
+        renderListaEstudiantes(data.items);
+        renderPaginacion();
+      } catch (error) {
+        $("#lista-estudiantes").innerHTML = '<div class="vacio">' + error.message + "</div>";
+        $("#paginacion-estudiantes").innerHTML = "";
+      }
+    }
+
+    function renderListaEstudiantes(items) {
+      const contenedor = $("#lista-estudiantes");
+      if (!items.length) {
+        contenedor.innerHTML = '<div class="vacio">No se encontraron estudiantes con esos filtros.</div>';
+        return;
+      }
+      contenedor.innerHTML = items.map((e) => {
+        const sem = e.semaforo || semaforo(e.promedio_general);
+        return '<article class="estudiante-card" data-id="' + e.id + '">' +
+          '<div class="estudiante-cab">' +
+            '<div class="avatar">' + iniciales(e.nombre + " " + e.apellido) + "</div>" +
+            '<div class="info"><h3>' + e.nombre + " " + e.apellido + "</h3><p>" + e.programa + "</p></div>" +
+            '<div class="promedio-badge ' + sem + '"><small>PROMEDIO</small>' + fmt(e.promedio_general) + "</div>" +
+          "</div>" +
+          '<div class="estudiante-meta"><span class="semestre">Semestre ' + e.semestre + '</span><span class="materias">' + e.materias_count + " materias</span></div>" +
+          '<div class="insignias">' + insigniasHTML(e.insignias) + "</div>" +
+        "</article>";
+      }).join("");
+
+      $$(".estudiante-card", contenedor).forEach((card) =>
+        card.addEventListener("click", () => abrirEstudiante(Number(card.dataset.id)))
+      );
+    }
+
+    function renderPaginacion() {
+      const f = estado.estudiantes;
+      const contenedor = $("#paginacion-estudiantes");
+      if (!f.pages || f.pages <= 1) { contenedor.innerHTML = ""; return; }
+      contenedor.innerHTML =
+        '<button class="btn" id="pag-prev" ' + (f.page <= 1 ? "disabled" : "") + ">Anterior</button>" +
+        "<span>Página " + f.page + " de " + f.pages + " · " + f.total + " estudiantes</span>" +
+        '<button class="btn" id="pag-next" ' + (f.page >= f.pages ? "disabled" : "") + ">Siguiente</button>";
+
+      const prev = $("#pag-prev");
+      const next = $("#pag-next");
+      if (prev) prev.addEventListener("click", () => { if (f.page > 1) { f.page--; cargarEstudiantes(); } });
+      if (next) next.addEventListener("click", () => { if (f.page < f.pages) { f.page++; cargarEstudiantes(); } });
+    }
+
+    /* ----------------------------- MODAL / CARNET ----------------------------- */
+    function plantillaEstudiante(d) {
+      const sem = d.promedio_general === null ? "amarillo" : semaforo(d.promedio_general);
+      const nombreCompleto = d.nombre + " " + d.apellido;
+      const codigo = "UCO-2026-" + String(d.id).padStart(4, "0");
+
+      const filas = d.notas.map((n) => {
+        const s = n.semaforo || semaforo(n.promedio);
+        return "<tr>" +
+          '<td><div class="con-punto"><span class="punto-semaforo ' + s + '"></span><div class="materia-nombre">' + n.materia + "<small>" + n.profesor + "</small></div></div></td>" +
+          "<td>" + fmt(n.corte1, 1) + "</td>" +
+          "<td>" + fmt(n.corte2, 1) + "</td>" +
+          "<td>" + fmt(n.corte3, 1) + "</td>" +
+          '<td><span class="nota-pill ' + s + '">' + fmt(n.promedio) + "</span></td>" +
+        "</tr>";
+      }).join("");
+
+      return '<div class="modal-grid">' +
+        "<div>" +
+          '<div class="carnet">' +
+            '<div class="carnet-top"><div class="mini-logo">UCO</div><span>Carnet estudiantil</span></div>' +
+            '<div class="carnet-cuerpo">' +
+              '<div class="carnet-foto">' +
+                '<img src="https://i.pravatar.cc/300?u=uco-' + d.id + '" alt="Foto de ' + nombreCompleto + '" ' +
+                  'onerror="this.classList.add(\'oculta\'); this.nextElementSibling.classList.remove(\'oculta\');" />' +
+                '<div class="carnet-iniciales oculta">' + iniciales(nombreCompleto) + "</div>" +
+              "</div>" +
+              '<div class="carnet-datos">' +
+                "<h3>" + nombreCompleto + "</h3>" +
+                '<div class="codigo">' + codigo + "</div>" +
+                "<p>" + d.programa + "</p>" +
+                "<p>Semestre " + d.semestre + "</p>" +
+              "</div>" +
+            "</div>" +
+            '<div class="carnet-badges">' + insigniasHTML(d.insignias) + "</div>" +
+            '<div class="carnet-promedio ' + sem + '"><small>PROMEDIO GENERAL</small><strong>' + fmt(d.promedio_general) + "</strong></div>" +
+          "</div>" +
+          '<div class="modal-acciones"><button class="btn btn-primario" id="btn-simular-est">Simular este estudiante</button></div>' +
+        "</div>" +
+        "<div>" +
+          '<div class="boletin-cab"><h4>Boletín de notas</h4>' +
+            '<div class="leyenda-semaforo">' +
+              '<b><span class="punto-semaforo verde"></span>Aprobado</b>' +
+              '<b><span class="punto-semaforo amarillo"></span>En riesgo</b>' +
+              '<b><span class="punto-semaforo rojo"></span>Perdiendo</b>' +
+            "</div>" +
+          "</div>" +
+          '<div class="tabla-envoltura"><table class="tabla">' +
+            "<thead><tr><th>Materia</th><th>C1</th><th>C2</th><th>C3</th><th>Promedio</th></tr></thead>" +
+            "<tbody>" + (filas || '<tr><td colspan="5">Sin notas registradas</td></tr>') + "</tbody>" +
+          "</table></div>" +
+          '<div class="modal-charts">' +
+            '<div class="panel"><h5>Evolución por corte</h5><div class="chart-caja"><canvas id="chart-evolucion-est"></canvas></div></div>' +
+            '<div class="panel"><h5>Radar por materia</h5><div class="chart-caja"><canvas id="chart-radar-est"></canvas></div></div>' +
+          "</div>" +
+        "</div>" +
+      "</div>";
+    }
+
+    async function abrirEstudiante(id) {
+      try {
+        const d = await api("/estudiantes/" + id);
+        estado.detalleModal = d;
+        $("#modal-contenido").innerHTML = plantillaEstudiante(d);
+
+        const overlay = $("#overlay-estudiante");
+        overlay.classList.add("visible");
+        overlay.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+
+        const notas = d.notas || [];
+        const promediosCorte = [1, 2, 3].map((c) =>
+          redondear(promedioDe(notas.map((n) => (c === 1 ? n.corte1 : c === 2 ? n.corte2 : n.corte3))))
+        );
+
+        crearChart("chart-evolucion-est", {
+          type: "line",
+          data: {
+            labels: ["Corte 1", "Corte 2", "Corte 3"],
+            datasets: [{
+              label: "Promedio por corte",
+              data: promediosCorte,
+              borderColor: "#8b5cf6",
+              backgroundColor: "rgba(139,92,246,0.18)",
+              fill: true,
+              tension: 0.35,
+              pointBackgroundColor: "#c4b5fd",
+              pointBorderColor: "#8b5cf6",
+              pointRadius: 5,
+              borderWidth: 3,
+            }],
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { min: 0, max: 5, ticks: { stepSize: 1 }, grid: { color: "rgba(255,255,255,0.06)" } },
+              x: { grid: { display: false } },
+            },
+          },
+        });
+
+        crearChart("chart-radar-est", {
+          type: "radar",
+          data: {
+            labels: notas.map((n) => n.materia),
+            datasets: [{
+              label: "Promedio",
+              data: notas.map((n) => n.promedio),
+              borderColor: "#22c55e",
+              backgroundColor: "rgba(34,197,94,0.16)",
+              pointBackgroundColor: "#86efac",
+              borderWidth: 2,
+            }],
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              r: {
+                min: 0, max: 5,
+                ticks: { stepSize: 1, backdropColor: "transparent", color: "#a3aed6" },
+                grid: { color: "rgba(255,255,255,0.08)" },
+                angleLines: { color: "rgba(255,255,255,0.08)" },
+                pointLabels: { color: "#a3aed6", font: { size: 10 } },
+              },
+            },
+          },
+        });
+
+        $("#btn-simular-est").addEventListener("click", () => {
+          cerrarModal();
+          simuladorPendiente = d.id;
+          mostrarVista("simulador");
+        });
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    function cerrarModal() {
+      const overlay = $("#overlay-estudiante");
+      overlay.classList.remove("visible");
+      overlay.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    /* ----------------------------- RANKING ----------------------------- */
+    async function cargarRanking() {
+      try {
+        const data = await api("/ranking");
+        const podio = data.slice(0, 3);
+        const resto = data.slice(3);
+
+        $("#podio").innerHTML = podio.map((r, i) =>
+          '<div class="podio-card p' + (i + 1) + '">' +
+            '<div class="podio-pos">' + r.posicion + "</div>" +
+            '<div class="avatar-lg">' + iniciales(r.estudiante) + "</div>" +
+            "<h3>" + r.estudiante + "</h3><p>" + r.programa + "</p>" +
+            '<div class="promedio-badge ' + r.semaforo + '">' + fmt(r.promedio) + "</div>" +
+            '<div class="insignias">' + insigniasHTML(r.insignias) + "</div>" +
+          "</div>"
+        ).join("");
+
+        $("#lista-ranking").innerHTML = resto.map((r) =>
+          '<div class="fila-ranking">' +
+            '<div class="pos">' + r.posicion + "</div>" +
+            '<div class="avatar">' + iniciales(r.estudiante) + "</div>" +
+            '<div class="quien"><h4>' + r.estudiante + "</h4><p>" + r.programa + "</p></div>" +
+            '<div class="insignias">' + insigniasHTML(r.insignias) + "</div>" +
+            '<div class="promedio-badge ' + r.semaforo + '">' + fmt(r.promedio) + "</div>" +
+          "</div>"
+        ).join("") || '<div class="vacio">Sin más estudiantes.</div>';
+      } catch (error) {
+        $("#lista-ranking").innerHTML = '<div class="vacio">' + error.message + "</div>";
+      }
+    }
+
+    /* ----------------------------- RIESGO ----------------------------- */
+    async function cargarRiesgo() {
+      try {
+        const data = await api("/estudiantes/en-riesgo");
+        const badge = $("#badge-riesgo");
+        if (badge) { badge.textContent = data.length; badge.style.display = data.length ? "inline-block" : "none"; }
+
+        $("#lista-riesgo").innerHTML = data.map((r) =>
+          '<article class="riesgo-card">' +
+            '<div class="cab">' +
+              '<div class="avatar" style="background: linear-gradient(135deg,#b91c1c,#ef4444);">' + iniciales(r.estudiante) + "</div>" +
+              '<div style="flex:1;"><h3>' + r.estudiante + "</h3><p>" + r.programa + " · Semestre " + r.semestre + "</p></div>" +
+              '<div class="promedio-badge rojo"><small>PROMEDIO</small>' + fmt(r.promedio) + "</div>" +
+            "</div>" +
+            '<div class="insignias">' + insigniasHTML(r.insignias) + "</div>" +
+            '<div class="materias-riesgo">' + r.materias_en_riesgo.map((m) => '<span class="chip-rojo">' + m + "</span>").join("") + "</div>" +
+          "</article>"
+        ).join("") || '<div class="vacio">No hay estudiantes en riesgo. ¡Buen trabajo!</div>';
+      } catch (error) {
+        $("#lista-riesgo").innerHTML = '<div class="vacio">' + error.message + "</div>";
+      }
+    }
+
+    /* ----------------------------- PROFESORES ----------------------------- */
+    async function cargarVistaProfesores() {
+      try {
+        if (!estado.profesores.length) estado.profesores = await api("/profesores");
+        const select = $("#select-profesor-vista");
+        if (!select.options.length) {
+          select.innerHTML = estado.profesores
+            .map((p) => '<option value="' + p.id + '">' + p.nombre + " " + p.apellido + "</option>")
+            .join("");
+        }
+        const id = Number(select.value || (estado.profesores[0] && estado.profesores[0].id));
+        if (id) await cargarCargaProfesor(id);
+      } catch (error) {
+        $("#profesor-materias").innerHTML = '<div class="vacio">' + error.message + "</div>";
+      }
+    }
+
+    async function cargarCargaProfesor(id) {
+      try {
+        const carga = await api("/profesores/" + id + "/carga");
+        estado.profesorActual = carga;
+
+        $("#profesor-stats").innerHTML =
+          '<div class="stat-card acento"><div class="stat-valor">' + carga.total_materias + '</div><div class="stat-etiqueta">Materias</div></div>' +
+          '<div class="stat-card acento"><div class="stat-valor">' + carga.total_estudiantes + '</div><div class="stat-etiqueta">Estudiantes</div></div>' +
+          '<div class="stat-card ' + semaforo(carga.promedio_cursos) + '"><div class="stat-valor">' + fmt(carga.promedio_cursos) + '</div><div class="stat-etiqueta">Promedio de cursos</div></div>';
+
+        $("#profesor-materias").innerHTML = carga.materias.map((m) =>
+          '<div class="materia-card" data-materia="' + m.materia_id + '">' +
+            "<h4>" + m.materia + "</h4>" +
+            '<div class="codigo">' + m.codigo + "</div>" +
+            '<div class="datos">' +
+              "<div>Estudiantes<b>" + m.estudiantes + "</b></div>" +
+              "<div>Promedio<b style=\"color:" + COLORES[semaforo(m.promedio)] + '">' + fmt(m.promedio) + "</b></div>" +
+              "<div>Aprobación<b>" + fmt(m.porcentaje_aprobacion, 0) + "%</b></div>" +
+            "</div>" +
+          "</div>"
+        ).join("");
+
+        $$(".materia-card", $("#profesor-materias")).forEach((card) =>
+          card.addEventListener("click", () => cargarMateria(Number(card.dataset.materia)))
+        );
+
+        if (carga.materias.length) await cargarMateria(carga.materias[0].materia_id);
+      } catch (error) {
+        $("#profesor-materias").innerHTML = '<div class="vacio">' + error.message + "</div>";
+      }
+    }
+
+    async function cargarMateria(id) {
+      try {
+        const st = await api("/materias/" + id + "/estadisticas");
+        estado.materiaActual = st;
+
+        $$(".materia-card").forEach((card) =>
+          card.classList.toggle("activa", Number(card.dataset.materia) === id)
+        );
+
+        $("#materia-titulo").textContent = st.materia;
+        $("#materia-codigo").textContent = st.codigo + " · " + st.profesor;
+        $("#materia-aprobacion").textContent = fmt(st.porcentaje_aprobacion, 0) + "% aprobación";
+        $("#materia-total").textContent = st.total_estudiantes + " estudiantes";
+
+        $("#materia-resumen").innerHTML =
+          '<div class="mini-item"><div class="mini-nombre">Promedio</div><div class="mini-valor ' + semaforo(st.promedio) + '">' + fmt(st.promedio) + "</div></div>" +
+          '<div class="mini-item"><div class="mini-nombre">Nota máxima</div><div class="mini-valor verde">' + fmt(st.nota_maxima) + "</div></div>" +
+          '<div class="mini-item"><div class="mini-nombre">Nota mínima</div><div class="mini-valor ' + semaforo(st.nota_minima) + '">' + fmt(st.nota_minima) + "</div></div>" +
+          '<div class="mini-item"><div class="mini-nombre">Aprobados</div><div class="mini-valor verde">' + st.aprobados + "</div></div>" +
+          '<div class="mini-item"><div class="mini-nombre">Reprobados</div><div class="mini-valor rojo">' + st.reprobados + "</div></div>";
+
+        $("#materia-estudiantes").innerHTML = st.estudiantes.map((e) =>
+          "<tr>" +
+            '<td><div class="con-punto"><span class="punto-semaforo ' + e.semaforo + '"></span>' + e.estudiante + "</div></td>" +
+            "<td>" + e.semestre + "</td>" +
+            "<td>" + fmt(e.corte1, 1) + "</td>" +
+            "<td>" + fmt(e.corte2, 1) + "</td>" +
+            "<td>" + fmt(e.corte3, 1) + "</td>" +
+            '<td><span class="nota-pill ' + e.semaforo + '">' + fmt(e.promedio) + "</span></td>" +
+          "</tr>"
+        ).join("");
+
+        const etiquetas = st.distribucion.map((d) => d.rango);
+        const cantidades = st.distribucion.map((d) => d.cantidad);
+        const colores = ["#ef4444", "#ef4444", "#ef4444", "#f59e0b", "#22c55e"];
+        crearChart("chart-histograma", {
+          type: "bar",
+          data: {
+            labels: etiquetas,
+            datasets: [{
+              label: "Estudiantes",
+              data: cantidades,
+              backgroundColor: colores,
+              borderRadius: 8,
+              maxBarThickness: 52,
+            }],
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "rgba(255,255,255,0.06)" } },
+              x: { grid: { display: false } },
+            },
+          },
+        });
+      } catch (error) {
+        $("#materia-titulo").textContent = "Error";
+      }
+    }
+
+    /* ----------------------------- SIMULADOR ----------------------------- */
+    let simuladorPendiente = null;
+
+    async function cargarVistaSimulador() {
+      const select = $("#sim-estudiante");
+      try {
+        if (select.options.length <= 1) {
+          const data = await api("/estudiantes?per_page=100&page=1");
+          select.innerHTML = data.items
+            .map((e) => '<option value="' + e.id + '">' + e.nombre + " " + e.apellido + "</option>")
+            .join("");
+        }
+        if (simuladorPendiente) {
+          select.value = String(simuladorPendiente);
+          simuladorPendiente = null;
+        } else if (!select.value && select.options.length) {
+          select.value = select.options[0].value;
+        }
+        await cargarMateriasSimulador();
+      } catch (error) {
+        $("#sim-mensaje").textContent = error.message;
+      }
+    }
+
+    async function cargarMateriasSimulador() {
+      const id = Number($("#sim-estudiante").value);
+      if (!id) return;
+      try {
+        const detalle = await api("/estudiantes/" + id);
+        const select = $("#sim-materia");
+        select.innerHTML = detalle.notas
+          .map((n) => '<option value="' + n.materia_id + '">' + n.materia + "</option>")
+          .join("");
+        if (detalle.notas.length) select.value = String(detalle.notas[0].materia_id);
+        await cargarSimulacion();
+      } catch (error) {
+        $("#sim-mensaje").textContent = error.message;
+      }
+    }
+
+    async function cargarSimulacion() {
+      const id = Number($("#sim-estudiante").value);
+      const materia = Number($("#sim-materia").value);
+      const meta = Math.min(5, Math.max(0, parseFloat($("#sim-meta").value) || 3));
+      if (!id || !materia) return;
+      try {
+        const datos = await api("/estudiantes/" + id + "/simulador?materia=" + materia + "&meta=" + meta);
+        estado.simulador.datos = datos;
+
+        $("#sim-c1").textContent = fmt(datos.corte1, 1);
+        $("#sim-c2").textContent = fmt(datos.corte2, 1);
+        $("#sim-necesaria").textContent = datos.alcanzable ? fmt(datos.nota_necesaria_corte3) : "No alcanzable";
+        $("#sim-necesaria").style.color = datos.alcanzable ? "var(--verde)" : "var(--rojo)";
+        $("#sim-maximo").textContent = fmt(datos.promedio_maximo);
+        $("#sim-materia-nombre").textContent = datos.materia + " · " + datos.estudiante;
+        $("#sim-mensaje").textContent = datos.mensaje;
+
+        const slider = $("#sim-slider");
+        slider.value = datos.corte3_actual;
+        actualizarSimulacion();
+
+        $("#sim-requisitos").innerHTML =
+          '<div class="mini-item"><div class="mini-nombre">Promedio actual</div><div class="mini-valor ' + semaforo(datos.promedio_actual) + '">' + fmt(datos.promedio_actual) + "</div></div>" +
+          '<div class="mini-item"><div class="mini-nombre">Meta</div><div class="mini-valor ' + semaforo(datos.meta) + '">' + fmt(datos.meta) + "</div></div>" +
+          '<div class="mini-item"><div class="mini-nombre">Nota necesaria</div><div class="mini-valor ' + (datos.alcanzable ? "verde" : "rojo") + '">' + (datos.alcanzable ? fmt(datos.nota_necesaria_corte3) : "Imposible") + "</div></div>";
+      } catch (error) {
+        $("#sim-mensaje").textContent = error.message;
+      }
+    }
+
+    function actualizarSimulacion() {
+      const d = estado.simulador.datos;
+      if (!d) return;
+      const corte3 = parseFloat($("#sim-slider").value);
+      const promedio = redondear((d.corte1 + d.corte2 + corte3) / 3);
+      const sem = semaforo(promedio);
+      const color = COLORES[sem];
+
+      $("#sim-corte3-valor").textContent = fmt(corte3, 1);
+      const grande = $("#sim-promedio");
+      grande.textContent = fmt(promedio);
+      grande.className = "grande " + sem;
+
+      const estados = {
+        verde: "Aprobado · promedio saludable",
+        amarillo: "En riesgo · cerca del límite",
+        rojo: "Perdiendo · por debajo de 3.0",
+      };
+      $("#sim-estado").textContent = estados[sem];
+
+      crearChart("chart-simulador", {
+        type: "bar",
+        data: {
+          labels: ["Corte 1", "Corte 2", "Corte 3", "Promedio"],
+          datasets: [{
+            data: [d.corte1, d.corte2, corte3, promedio],
+            backgroundColor: ["#8b5cf6", "#3b82f6", "#f59e0b", color],
+            borderRadius: 10,
+            maxBarThickness: 64,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { min: 0, max: 5, ticks: { stepSize: 1 }, grid: { color: "rgba(255,255,255,0.06)" } },
+            x: { grid: { display: false } },
+          },
+        },
+      });
+    }
+
+    /* ----------------------------- EVENTOS ----------------------------- */
+    let temporizadorBusqueda = null;
+
+    function enlazarEventos() {
+      $$(".nav-item").forEach((boton) =>
+        boton.addEventListener("click", () => mostrarVista(boton.dataset.vista))
+      );
+
+      $("#modal-cerrar").addEventListener("click", cerrarModal);
+      $("#overlay-estudiante").addEventListener("click", (evento) => {
+        if (evento.target === evento.currentTarget) cerrarModal();
+      });
+      document.addEventListener("keydown", (evento) => {
+        if (evento.key === "Escape") cerrarModal();
+      });
+
+      $("#buscar-estudiante").addEventListener("input", (evento) => {
+        clearTimeout(temporizadorBusqueda);
+        temporizadorBusqueda = setTimeout(() => {
+          estado.estudiantes.buscar = evento.target.value.trim();
+          estado.estudiantes.page = 1;
+          cargarEstudiantes();
+        }, 300);
+      });
+
+      $("#filtro-semestre").addEventListener("change", (evento) => {
+        estado.estudiantes.semestre = evento.target.value;
+        estado.estudiantes.page = 1;
+        cargarEstudiantes();
+      });
+
+      $("#filtro-profesor").addEventListener("change", (evento) => {
+        estado.estudiantes.profesorId = evento.target.value;
+        estado.estudiantes.page = 1;
+        cargarEstudiantes();
+      });
+
+      $("#select-profesor-vista").addEventListener("change", (evento) => {
+        cargarCargaProfesor(Number(evento.target.value));
+      });
+
+      $("#sim-estudiante").addEventListener("change", cargarMateriasSimulador);
+      $("#sim-materia").addEventListener("change", cargarSimulacion);
+      $("#sim-meta").addEventListener("change", cargarSimulacion);
+      $("#sim-slider").addEventListener("input", actualizarSimulacion);
+    }
+
+    async function iniciar() {
+      enlazarEventos();
+      await cargarInicio();
+    }
+
+    iniciar();
+  </script>
+</body>
+</html>
